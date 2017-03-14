@@ -1,0 +1,10 @@
+.shopify-theme
+.vscode
+node_modules
+assets
+config
+layout
+locales
+snippets
+sections
+templates
