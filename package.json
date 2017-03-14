@@ -30,6 +30,7 @@
   "preferGlobal": true,
   "dependencies": {
     "chalk": "^1.1.3",
+    "glob": "^7.1.1",
     "request": "^2.81.0",
     "waiting-on": "0.0.0"
   }

@@ -24,6 +24,22 @@ Shopify.prototype.get = function(url, query, callback){
     this.request('GET', url, query, undefined, callback);
 };
 
+Shopify.prototype.put = function(url, query, body, callback){
+    if(typeof query === 'function'){
+        callback = query;
+        body = undefined;
+        query = undefined;
+    }
+    
+    else if(typeof body === 'function'){
+        callback = body;
+        body = query;
+        query = undefined;
+    }
+    
+    this.request('PUT', url, query, body, callback);
+};
+
 Shopify.prototype.request = function(method, url, query, body, callback){
     
     var request_data = {

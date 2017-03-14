@@ -14,6 +14,8 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
+console.log("");
+
 function CLI(args){
     this.git = {};
     this.loadConfig(args);
@@ -23,7 +25,7 @@ function CLI(args){
             this.initConfig(args.slice(1));
             break;
         case 'up':
-            console.log('Not implemented yet...');
+            this.uploadTheme(args.slice(1));
             break;
         case 'down':
             this.downloadTheme(args.slice(1));
@@ -46,13 +48,14 @@ CLI.prototype.downloadTheme = function(args){
             throw err;
         }
         
-        this.theme = new ShopifyTheme(this.theme_id);
-        this.theme.download(this.shopify, (err, changed) => {
+        this.theme = new ShopifyTheme(this.theme_id, this.shopify);
+        this.theme.download((err, changed) => {
             if(err){
                 throw err;
             }
             
             if(changed && changed.length){
+                console.log("");
                 console.log("Files changed:");
                 changed.forEach(file => console.log('- ' + file));
             } else {
@@ -62,21 +65,6 @@ CLI.prototype.downloadTheme = function(args){
             process.exit();
         });
     });
-    
-    /*this.gitBranch((err, branch) => {
-        if(err) throw err;
-        
-        fs.readFile('.shopify-theme/' + (branch ? branch : '') + '.theme', 'utf8', (err, data) => {
-            if(err && err.code !== 'ENOENT'){
-                throw err;
-            }
-            
-            var theme_id = args[0];
-            
-            var theme = new ShopifyTheme();
-            theme.download();
-        });
-    });*/
 };
 
 CLI.prototype.getTheme = function(args, callback){
@@ -162,16 +150,7 @@ CLI.prototype.initConfig = function(args){
         if(err){
             throw err;
         }
-        
-        try {
-            fs.mkdirSync(path.join(process.cwd(), '.shopify-theme'));
-        } catch(err){
-            if(err.code !== 'EEXIST'){
-                throw err;
-            }
-        }
-        
-        fs.writeFileSync(path.join(process.cwd(), '.shopify-theme', 'config.json'), JSON.stringify(this.config, null, 2), 'utf8');
+        this.saveConfig();
         console.log('Config saved.');
         process.exit();
     });
@@ -251,6 +230,7 @@ CLI.prototype.promptAssociateThemeWithBranch = function(callback){
             }
             this.config.branches[this.git.branch] = this.theme_id;
             this.saveConfig();
+            callback(this.git.branch);
         }
         else if(response === 'n' || response === 'no'){
             callback(this.git.branch);
@@ -297,6 +277,45 @@ CLI.prototype.requireInitialized = function(){
     if(!this.initialized){
         throw new Error(chalk.red('Could not load Shopify theme config. Please run `shopify-theme init`.'));
     }
+};
+
+CLI.prototype.saveConfig = function(){
+    try {
+        fs.mkdirSync(path.join(process.cwd(), '.shopify-theme'));
+    } catch(err){
+        if(err.code !== 'EEXIST'){
+            throw err;
+        }
+    }
+    
+    fs.writeFileSync(path.join(process.cwd(), '.shopify-theme', 'config.json'), JSON.stringify(this.config, null, 2), 'utf8');
+};
+
+CLI.prototype.uploadTheme = function(args){
+    this.requireInitialized();
+    
+    this.getTheme(args, err => {
+        if(err){
+            throw err;
+        }
+        
+        this.theme = new ShopifyTheme(this.theme_id, this.shopify);
+        this.theme.upload((err, uploaded) => {
+            if(err){
+                throw err;
+            }
+            
+            if(uploaded && uploaded.length){
+                console.log("");
+                console.log("Files uploaded:");
+                uploaded.forEach(file => console.log('- ' + file));
+            } else {
+                console.log('No files have changed since last sync/download.');
+            }
+            
+            process.exit();
+        });
+    });
 };
 
 
