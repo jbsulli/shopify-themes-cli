@@ -130,6 +130,16 @@ Shopify.prototype.send = function(data){
 Shopify.prototype.done = function(request, err, response, body){
     this.throttled.out--;
     
+    // if timed out, try again
+    if(err){
+        if(request.attempts < 5 && request.method === 'GET' && (err.code === "ETIMEDOUT" || err.code === "ECONNRESET")){
+            console.log("REQUEST TIMED OUT: " + request.url);
+            request.out = false;
+            this.checkThrottled();
+            return;
+        }
+    }
+    
     if(response){
         if(response.headers && response.headers.HTTP_X_SHOPIFY_SHOP_API_CALL_LIMIT){
             try {

@@ -141,7 +141,7 @@ ShopifyTheme.prototype.saveFile = function(asset, buff, callback, compare_hash){
                     if(err){
                         return callback(err);
                     }
-                    this.saveFile(asset, callback);
+                    this.saveFile(asset, buff, callback, compare_hash);
                 });
                 return;
             }
